@@ -1,0 +1,105 @@
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include "integration.h"
+
+bool setQuadFormula(QuadFormula* qf, char* name)
+{
+    if(qf == NULL || name == NULL)
+        return false;
+
+    if(strcmp(name, "left") == 0)
+    {
+        qf->n = 1;
+        qf->x = malloc(sizeof(double));
+        qf->w = malloc(sizeof(double));
+
+        qf->x[0] = 0.0;
+        qf->w[0] = 1.0;
+    }
+
+    else if(strcmp(name, "right") == 0)
+    {
+        qf->n = 1;
+        qf->x = malloc(sizeof(double));
+        qf->w = malloc(sizeof(double));
+
+        qf->x[0] = 1.0;
+        qf->w[0] = 1.0;
+    }
+
+    else if(strcmp(name, "middle") == 0)
+    {
+        qf->n = 1;
+        qf->x = malloc(sizeof(double));
+        qf->w = malloc(sizeof(double));
+
+        qf->x[0] = 0.5;
+        qf->w[0] = 1.0;
+    }
+
+    else if(strcmp(name, "trapezes") == 0)
+    {
+        qf->n = 2;
+        qf->x = malloc(2*sizeof(double));
+        qf->w = malloc(2*sizeof(double));
+
+        qf->x[0] = 0.0;
+        qf->x[1] = 1.0;
+
+        qf->w[0] = 0.5;
+        qf->w[1] = 0.5;
+    }
+
+    else if(strcmp(name, "simpson") == 0)
+    {
+        qf->n = 3;
+        qf->x = malloc(3*sizeof(double));
+        qf->w = malloc(3*sizeof(double));
+
+        qf->x[0] = 0.0;
+        qf->x[1] = 0.5;
+        qf->x[2] = 1.0;
+
+        qf->w[0] = 1.0/6.0;
+        qf->w[1] = 4.0/6.0;
+        qf->w[2] = 1.0/6.0;
+    }
+
+    else if(strcmp(name, "gauss2") == 0)
+    {
+        qf->n = 2;
+        qf->x = malloc(2*sizeof(double));
+        qf->w = malloc(2*sizeof(double));
+
+        double a = 1.0/sqrt(3.0);
+
+        qf->x[0] = 0.5 - 0.5*a;
+        qf->x[1] = 0.5 + 0.5*a;
+
+        qf->w[0] = 0.5;
+        qf->w[1] = 0.5;
+    }
+
+    else if(strcmp(name, "gauss3") == 0)
+    {
+        qf->n = 3;
+        qf->x = malloc(3*sizeof(double));
+        qf->w = malloc(3*sizeof(double));
+
+        double a = sqrt(3.0/5.0);
+
+        qf->x[0] = 0.5 - 0.5*a;
+        qf->x[1] = 0.5;
+        qf->x[2] = 0.5 + 0.5*a;
+
+        qf->w[0] = 5.0/18.0;
+        qf->w[1] = 8.0/18.0;
+        qf->w[2] = 5.0/18.0;
+    }
+
+    else
+        return false;
+
+    return true;
+}
