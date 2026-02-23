@@ -1,25 +1,23 @@
 double integrate(double (*f)(double), double a, double b, int N, QuadFormula* qf)
-106 {
-107
-108 »·······if(N <= 0)
-109 »·······{
-110 »·······»·······return 0.0;
-111 »·······}
-112 »·······if(f == NULL || qf->n <= 0 || qf == NULL) return 0.0;
-113
-114 »·······int i;
-115 »·······double res = 0.0;
-116 »·······int k;
-117 »·······double pas = (b-a)/N;
-118
-119 »·······for(i = 0; i < N; i++)
-120 »·······{
-121 »·······»·······for(k = 0; k < qf->n+1; k++)
-122 »·······»·······{
-123 »·······»·······»·······res = (b - a)/N * qf->w[k] * f(a + qf->x[k]*pas);
-124 »·······»·······}
-125 »·······»·······res*=pas;
-126 »·······»·······a+=pas;
-127 »·······}
-128 »·······printf("%f\n", res);
-129 }
+{
+    if (f == NULL || qf == NULL || qf->n <= 0 || N <= 0)
+        return 0.0;
+
+    double pas = (b - a) / N;
+    double res = 0.0;
+    int i;
+    int k;
+
+    for (i = 0; i < N; i++)
+    {
+        double ai = a + i * pas;
+
+        for (k = 0; k < qf->n; k++)
+        {
+            double aze = ai + pas * qf->x[k];
+            res += qf->w[k] * f(aze);
+        }
+    }
+
+    return res * pas;
+}
