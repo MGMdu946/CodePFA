@@ -1,23 +1,136 @@
+#define INTEGRATION_C
+
+#include "integration.h"
+
+bool setQuadFormula(QuadFormula* qf, char* name)
+{
+	if(qf == NULL || name == NULL) return false;
+
+	if(strcmp(name, "left") == 0)
+	{
+		qf->n = 1;
+		qf->x[0] = 0.0;
+		qf->w[0] = 1.0;
+		strcpy(qf->name, name);
+	}
+	else if(strcmp(name, "right") == 0)
+	{	
+		qf->n = 1;
+		qf->x[0] = 1.0;
+		qf->w[0] = 1.0;
+		strcpy(qf->name, name);
+	}
+
+	else if(strcmp(name, "middle") == 0)
+	{	
+		qf->n = 1;
+		qf->x[0] = 0.5;
+		qf->w[0] = 1.0;
+		strcpy(qf->name, name);
+	}
+
+	else if(strcmp(name, "trapezes") == 0)
+	{
+		qf->n = 2;
+		qf->x[0] = 0.0;
+		qf->x[1] = 1.0;
+		qf->w[0] = 0.5;
+		qf->w[1] = 0.5;
+		strcpy(qf->name, name);
+	}
+
+	else if(strcmp(name, "simpson") == 0)
+	{
+		qf->n = 3;
+		qf->x[0] = 0.0;
+		qf->x[1] = 0.5;
+		qf->x[2] = 1.0;
+		qf->w[0] = 1.0/6.0;
+		qf->w[1] = 2.0/3.0;
+		qf->w[2] = 1.0/6.0;
+		strcpy(qf->name, name);
+	}
+
+	else if(strcmp(name, "gauss2") == 0)
+	{
+		qf->n = 2;
+
+		double a = 1.0/sqrt(3.0);
+
+		qf->x[0] = 0.5 - 0.5*a;
+		qf->x[1] = 0.5 + 0.5*a;
+		qf->w[0] = 0.5;
+		qf->w[1] = 0.5;
+		strcpy(qf->name, name);
+	}
+
+	else if(strcmp(name, "gauss3") == 0)
+	{
+		qf->n = 3;
+
+		double a = sqrt(3.0/5.0);
+
+		qf->x[0] = 0.5 - 0.5*a;
+		qf->x[1] = 0.5;
+		qf->x[2] = 0.5 + 0.5*a;
+
+		qf->w[0] = 5.0/18.0;
+		qf->w[1] = 8.0/18.0;
+		qf->w[2] = 5.0/18.0;
+		strcpy(qf->name, name);
+	}
+
+	else
+	{
+	return false;
+	}
+
+	return true;
+}
+
+/* This function is not required ,but it may useful to debug */
+void printQuadFormula(QuadFormula* qf)
+{
+  printf("Quadratic formula: %s\n", qf->name);
+  /* Print everything else that may be useful */
+}
+
+
+/* Approximate the integral of function f from a to b.
+   - f is a pointer to a function pointer
+   - a and b are the integration bounds
+   - Interval [a,b] is split in N subdivisions [ai,bi]
+   - Integral of f on each subdivision [ai,bi] is approximated by the quadrature formula qf.
+*/
 double integrate(double (*f)(double), double a, double b, int N, QuadFormula* qf)
 {
-    if (f == NULL || qf == NULL || qf->n <= 0 || N <= 0)
-        return 0.0;
 
-    double pas = (b - a) / N;
-    double res = 0.0;
-    int i;
-    int k;
+	if(f == NULL || qf == NULL || qf->n <= 0 || N <= 0) return 0.0;
 
-    for (i = 0; i < N; i++)
-    {
-        double ai = a + i * pas;
+	int i;
+	double res = 0.0;
+	int k;
+	double pas = (b-a)/N;
 
-        for (k = 0; k < qf->n; k++)
-        {
-            double aze = ai + pas * qf->x[k];
-            res += qf->w[k] * f(aze);
-        }
-    }
+	for(i = 0; i < N; i++)
+	{
+		double ai = a + i * pas;
+		for(k = 0; k < qf->n; k++)
+		{
+			double tt = ai + pas * qf->x[k];
+			res += qf->w[k] * f(tt);
+		}
+	}
+	return res * pas;;
+}
 
-    return res * pas;
+double integrate_dx(double (*f)(double), double a, double b, double dx, QuadFormula* qf)
+{
+	if(f == NULL || qf == NULL || qf->n <= 0 || dx <= 0) return 0.0;
+
+	double len = fabs(b - a);
+	int N = (int) round(len / dx);
+	if (N <= 0) N = 1;
+
+	return integrate(f, a, b, N, qf);
 }
