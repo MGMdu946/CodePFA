@@ -1,0 +1,118 @@
+#define PFA_C
+
+#include "pfa.h"
+
+bool init_integration(char* quadrature, double dt)
+{
+  pfa_dt = dt;
+  return setQuadFormula(&pfaQF, quadrature);
+}
+
+double phi(double x)
+{
+  return 0.398942280401433 * exp(-x * x / 2);
+}
+
+
+double PHI(double x)
+{
+  if (x >= 0)
+  {
+    return 0.5 + integrate_dx(phi, 0.0, x, pfa_dt, &pfaQF);
+  }
+  else
+  {
+    return 0.5 - integrate_dx(phi, x, 0.0, pfa_dt, &pfaQF);
+  }
+}
+
+
+double optionPrice(Option* option)
+{
+  double S0  = option->S0;
+  double K   = option->K;
+  double T   = option->T;
+  double mu  = option->mu;
+  double sig = option->sig;
+
+  double z0 = (log(K / S0) - (mu - sig * sig / 2.0) * T) / (sig * sqrt(T));
+
+  if (option->type == CALL)
+  {
+    return S0 * exp(mu * T) * PHI(sig * sqrt(T) - z0) - K * PHI(-z0);
+  }
+  else
+  {
+    return K * PHI(z0) - S0 * exp(mu * T) * PHI(z0 - sig * sqrt(T));
+  }
+}
+
+double clientPDF_X(InsuredClient* client, double x)
+{
+  if (x <= 0)
+  {
+    return 0.0;
+  }
+  return phi((log(x) - client->m) / client->s) / (client->s * x);
+}
+
+double clientCDF_X(InsuredClient* client, double x)
+{
+  if (x <= 0)
+  {
+    return 0.0;
+  }
+  return PHI((log(x) - client->m) / client->s);
+}
+
+static InsuredClient* localClient;
+static double localX;
+static double localProductPDF(double t)
+{
+  return clientPDF_X(localClient, t) * clientPDF_X(localClient, localX - t);
+}
+
+static double localPDF_X1X2(double x)
+{
+  if (x <= 0) 
+  {
+    return 0.0;
+  }
+  localX = x;
+  return integrate_dx(localProductPDF, 0.0, x, pfa_dt, &pfaQF);
+}
+
+double clientPDF_X1X2(InsuredClient* client, double x)
+{
+  if (x <= 0)
+  {
+    return 0.0;
+  }
+  localClient = client;
+  return localPDF_X1X2(x);
+}
+
+double clientCDF_X1X2(InsuredClient* client, double x)
+{
+  if (x <= 0)
+  {
+    return 0.0;
+  }
+  localClient = client;
+  return integrate_dx(localPDF_X1X2, 0.0, x, pfa_dt, &pfaQF);
+}
+
+double clientCDF_S(InsuredClient* client, double x)
+{
+  if (x < 0) 
+  {
+    return 0.0;
+  }
+  if (x == 0)
+  {
+    return client->p[0];
+  }
+  return client->p[0]
+       + client->p[1] * clientCDF_X(client, x)
+       + client->p[2] * clientCDF_X1X2(client, x);
+}
